@@ -17,7 +17,7 @@ ActiveRecord::Schema.define(version: 2019_11_29_061312) do
 
   create_table "users", force: :cascade do |t|
     t.string "uid", null: false
-    t.string "name", null: false
+    t.string "slack_name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["uid"], name: "index_users_on_uid", unique: true
