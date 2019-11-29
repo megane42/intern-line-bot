@@ -48,6 +48,12 @@ class LineBot
         end
       when :naming
         if user.new_record?
+
+          p "===================="
+          p user.class
+          p user.methods
+          p "===================="
+
           user.slack_name = user_text
           user.save
           "覚えました！お疲れさまでした。"
