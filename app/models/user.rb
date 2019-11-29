@@ -1,4 +1,6 @@
 class User < ApplicationRecord
+  has_many :lockings
+
   def state
     if new_record?
       :new

@@ -50,18 +50,26 @@ class LineBot
           user.save
           "はじめまして！名前を教えてもらえますか？（この名前は Slack に投稿されます）"
         when :confirmed
-          # send slack
+          user.lockings.create(floor: extract_floor_from(user_text))
           "いつも遅くまでお疲れさまです！"
         end
       when :naming
         case user.state
         when :name_hearing
           user.update(slack_name: user_text)
-          # send slack
+          user.lockings.create(floor: extract_floor_from(user_text))
           "覚えました！お疲れさまでした。"
         else
           "ちょっと何言ってるかわかんないですね"
         end
+      end
+    end
+
+    def extract_floor_from(user_text)
+      if user_text.include?("4F")
+        "4F"
+      elsif user_text.include?("2F")
+        "2F"
       end
     end
 
