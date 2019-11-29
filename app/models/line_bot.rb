@@ -13,8 +13,26 @@ class LineBot
       when Line::Bot::Event::Message
         case event.type
         when Line::Bot::Event::MessageType::Text
-          context = define_context_by(event.message["text"])
-          message = define_message_by(context, event["source"]["userId"], event.message["text"])
+          uid = event["source"]["userId"]
+          text = event.message["text"]
+          user = User.find_or_initialize_by(uid: uid)
+
+          context = define_context_by(text)
+          action  = define_action_by(context, user)
+          message = "ちょっと何言ってるかわかんないですね"
+
+          case action
+          when :hear_name
+            user.save
+            message = "はじめまして！名前を教えてもらえますか？（この名前は Slack に投稿されます）"
+          when :remember_name
+            user.update(slack_name: text)
+            message = "覚えました！すいません、もう 1 回施錠ボタンを押してください..."
+          when :notify_slack
+            user.lockings.create(floor: extract_floor_from(text))
+            message = "いつも遅くまでお疲れさまです！"
+          end
+
           client.reply_message(event["replyToken"], text_message(message))
         end
       end
@@ -37,30 +55,19 @@ class LineBot
       end
     end
 
-    def define_message_by(context, user_id, user_text)
-      user = User.find_or_initialize_by(uid: user_id)
-
+    def define_action_by(context, user)
       case context
       when :locking
         case user.state
-        when :new
-          user.save
-          "はじめまして！名前を教えてもらえますか？（この名前は Slack に投稿されます）"
-        when :name_hearing
-          user.save
-          "はじめまして！名前を教えてもらえますか？（この名前は Slack に投稿されます）"
+        when :new, :name_hearing
+          :hear_name
         when :confirmed
-          user.lockings.create(floor: extract_floor_from(user_text))
-          "いつも遅くまでお疲れさまです！"
+          :notify_slack
         end
       when :naming
         case user.state
         when :name_hearing
-          user.update(slack_name: user_text)
-          user.lockings.create(floor: extract_floor_from(user_text))
-          "覚えました！お疲れさまでした。"
-        else
-          "ちょっと何言ってるかわかんないですね"
+          :remember_name
         end
       end
     end

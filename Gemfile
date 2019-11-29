@@ -40,3 +40,5 @@ gem 'sinatra'
 
 # Use debugger
 # gem 'debugger', group: [:development, :test]
+
+gem 'slack-notifier'
