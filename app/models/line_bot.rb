@@ -39,23 +39,25 @@ class LineBot
 
     def define_message_by(context, user_id, user_text)
       user = User.find_or_initialize_by(uid: user_id)
+
       case context
       when :locking
-        if user.new_record?
+        case user.state
+        when :new
+          user.save
           "はじめまして！名前を教えてもらえますか？（この名前は Slack に投稿されます）"
-        else
+        when :name_hearing
+          user.save
+          "はじめまして！名前を教えてもらえますか？（この名前は Slack に投稿されます）"
+        when :confirmed
+          # send slack
           "いつも遅くまでお疲れさまです！"
         end
       when :naming
-        if user.new_record?
-
-          p "===================="
-          p user.class
-          p user.methods
-          p "===================="
-
-          user.slack_name = user_text
-          user.save
+        case user.state
+        when :name_hearing
+          user.update(slack_name: user_text)
+          # send slack
           "覚えました！お疲れさまでした。"
         else
           "ちょっと何言ってるかわかんないですね"
